@@ -1,9 +1,15 @@
+import gevent.monkey
+gevent.monkey.patch_all()
+
 import os
 from dotenv import load_dotenv
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, UserMixin, current_user
 from flask_bcrypt import Bcrypt
+
+from gevent import pywsgi
+from geventwebsocket.handler import WebSocketHandler
 
 import requests
 from flask_socketio import SocketIO, send
@@ -17,12 +23,12 @@ from datetime import date, timedelta
 today = date.today()
 
 load_dotenv()
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
+socketio = SocketIO(app, async_mode="gevent", cors_allowed_origins="*")
+#socketio = SocketIO(app)
 
 db.init_app(app)
 login_manager = LoginManager()
@@ -209,12 +215,24 @@ def handle_led_command(command):
     print(f"Received command: {command}")
     socketio.emit('toggle_led', command)
 
-@socketio.on('connect')
-def handle_connect():
-    print("✅ ESP32 Connected!")
-    socketio.emit('connection_success', {'message': 'Connected to Flask WebSocket'})
+#@socketio.on('connect')
+#def handle_connect():
+#    print("✅ ESP32 Connected!")
+#    socketio.emit('connection_success', {'message': 'Connected to Flask WebSocket'})
+#    socketio.emit('ping_test', {'message': 'Ping from Flask'})
+#
 
 if __name__ == '__main__':
     #app.run(debug=True)
-    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+    #socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+    #socketio.run(app, host='0.0.0.0', port=5000)
+
+    host = "0.0.0.0"
+    port = 5000
+    print(f"🚀 Server running at: http://127.0.0.1:{port}/ (Localhost)")
+    # print(f"🌍 Access on LAN: http://your-local-ip:{port}/")
+
+    # Use gevent WSGI server instead of eventlet
+    server = pywsgi.WSGIServer((host, port), app, handler_class=WebSocketHandler)
+    server.serve_forever()
 
