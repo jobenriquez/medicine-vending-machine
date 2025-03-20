@@ -19,7 +19,9 @@ class Medicine(db.Model):
     expiry_date = db.Column(db.Date, nullable=False)
     price = db.Column(db.Numeric(10,2), nullable=False)
     added_date = db.Column(db.Date, nullable=False)
-    location = db.Column(db.String(100), nullable=False)
+    row = db.Column(db.String(100), nullable=False)
+    column = db.Column(db.String(100), nullable=False)
+
 
 class Transaction(db.Model):
     __tablename__ = 'transactions'

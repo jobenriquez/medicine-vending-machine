@@ -7,26 +7,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 </head>
 <body>
-    <h1>ESP32 LED Control</h1>
-    <button id="onButton">Turn ON LED</button>
-    <button id="offButton">Turn OFF LED</button>
-    <p>Status: <span id="status">Waiting...</span></p>
+    <h1>TEST PAGE</h1>
+    <button id="onButton">Enable</button>
+    <button id="offButton">Disable</button>
 
     <script>
         // Connect to Flask Socket.IO server
-        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        //var socket = io.connect('http://' + document.domain + ':' + location.port);
 
         // Button event listeners
         document.getElementById("onButton").addEventListener("click", function() {
-            socket.emit('toggle_led', 'ON');
+            socket.emit('toggle_motor', 'ON');
         });
 
         document.getElementById("offButton").addEventListener("click", function() {
-            socket.emit('toggle_led', 'OFF');
+            socket.emit('toggle_motor', 'OFF');
         });
 
         // Listen for updates from Flask
-        socket.on('toggle_led', function(data) {
+        socket.on('toggle_motor', function(data) {
             document.getElementById("status").innerText = data;
         });
     </script>
