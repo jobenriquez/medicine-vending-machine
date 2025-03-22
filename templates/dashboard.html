@@ -303,7 +303,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Connect to Flask Socket.IO server
-        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        var socket = io.connect(window.location.protocol + '//' + window.location.hostname + ':' + location.port);
     </script>
 </body>
 </html>

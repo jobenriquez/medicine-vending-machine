@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 LED Control</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 </head>
 <body>
     <h1>TEST PAGE</h1>
@@ -16,18 +15,18 @@
         //var socket = io.connect('http://' + document.domain + ':' + location.port);
 
         // Button event listeners
-        document.getElementById("onButton").addEventListener("click", function() {
-            socket.emit('toggle_motor', 'ON');
-        });
+        //document.getElementById("onButton").addEventListener("click", function() {
+         //   socket.emit('toggle_motor', 'ON');
+        //});
 
-        document.getElementById("offButton").addEventListener("click", function() {
-            socket.emit('toggle_motor', 'OFF');
-        });
+        // document.getElementById("offButton").addEventListener("click", function() {
+          //  socket.emit('toggle_motor', 'OFF');
+       // });
 
         // Listen for updates from Flask
-        socket.on('toggle_motor', function(data) {
-            document.getElementById("status").innerText = data;
-        });
+        //socket.on('toggle_motor', function(data) {
+          //  document.getElementById("status").innerText = data;
+        //});
     </script>
 </body>
 </html>
