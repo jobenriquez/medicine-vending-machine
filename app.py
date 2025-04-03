@@ -248,7 +248,7 @@ def dispense_item():
     column = request.form["dispenseItemColumn"]
     quantity = int(request.form["dispenseItemQuantity"])
 
-    motor_position = f"{row}{column}"
+    motor_position = f"{row}{column}_{quantity}"
     print(motor_position)
 
     socketio.emit("toggle_motor", motor_position)  # Send dynamic motor ID

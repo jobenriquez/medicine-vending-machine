@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a38a0ee5-aaf8-4a39-9b8c-3a2dd0b3914d" name="Changes" comment="Add arduino files">
+    <list default="true" id="a38a0ee5-aaf8-4a39-9b8c-3a2dd0b3914d" name="Changes" comment="Changes">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Arduino/MEGA/MEGA.ino" beforeDir="false" afterPath="$PROJECT_DIR$/Arduino/MEGA/MEGA.ino" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Arduino/Uno/Uno.ino" beforeDir="false" afterPath="$PROJECT_DIR$/Arduino/Uno/Uno.ino" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -149,7 +150,9 @@
       <workItem from="1742013083743" duration="5529000" />
       <workItem from="1742033410376" duration="1145000" />
       <workItem from="1742447417602" duration="12624000" />
-      <workItem from="1742627696462" duration="8016000" />
+      <workItem from="1742627696462" duration="8109000" />
+      <workItem from="1743485538132" duration="8189000" />
+      <workItem from="1743659387437" duration="7155000" />
     </task>
     <task id="LOCAL-00001" summary="Bug fix">
       <option name="closed" value="true" />
@@ -175,7 +178,15 @@
       <option name="project" value="LOCAL" />
       <updated>1742464111885</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Changes">
+      <option name="closed" value="true" />
+      <created>1742640887060</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1742640887060</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -196,10 +207,11 @@
     <MESSAGE value="Bug fix" />
     <MESSAGE value="Update" />
     <MESSAGE value="Add arduino files" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add arduino files" />
+    <MESSAGE value="Changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Changes" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/medicine_vending_machine$medicine_vending_machine.coverage" NAME="medicine-vending-machine Coverage Results" MODIFIED="1742632238762" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/medicine_vending_machine$medicine_vending_machine.coverage" NAME="medicine-vending-machine Coverage Results" MODIFIED="1743673598071" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/medicine_vending_machine$app.coverage" NAME="app Coverage Results" MODIFIED="1740721425922" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

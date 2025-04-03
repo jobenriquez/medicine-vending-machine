@@ -1,25 +1,20 @@
 #include <Arduino.h>
 
-// Define the Motor struct
+// Define the Motor struct  
 struct Motor {
     int IN1;
     int IN2;
     int limitSwitchPin;
     bool isRunning;
     bool isStoppedBySwitch;
-    int lastLimitSwitchState;
-    unsigned long lastDebounceTime;
 };
 
-// Define motor configurations
-const int NUM_MOTORS = 2;
+// Vending machine motor configuration
+const int NUM_MOTORS = 1;
 Motor motors[NUM_MOTORS] = {
-    {6, 7, 3, false, false, HIGH, 0}, // Motor "A1"
-    {9, 10, 2, false, false, HIGH, 0} // Motor "A2"
+    {7, 6, 5, false, false}, // Motor "A1"
 };
 
-// Debounce delay
-const unsigned long debounceDelay = 100;
 
 // Command buffer
 const int COMMAND_BUFFER_SIZE = 32;
@@ -27,16 +22,31 @@ char commandBuffer[COMMAND_BUFFER_SIZE];
 int commandIndex = 0;
 int limitSwitchMotorIndex = -1;
 
+// TB6600 configuration
+const int dirPin = 13;  
+const int stepPin = 12; 
+const int initialPosition = 0;
+const int stepsPerSecond = 100;
+
+bool motorCompleted = false;
+char lastRackId = '\0'; 
+int quantity = 0;
+int quantityDispensed = 0;
+
 void setup() {
     Serial1.begin(9600);
     Serial.begin(9600);
 
-    // Initialize all motor pins
+    // Initialize all vending machine motors
     for (int i = 0; i < NUM_MOTORS; i++) {
         pinMode(motors[i].IN1, OUTPUT);
         pinMode(motors[i].IN2, OUTPUT);
-        pinMode(motors[i].limitSwitchPin, INPUT); 
+        pinMode(motors[i].limitSwitchPin, INPUT_PULLUP); 
     }
+
+    // Initialize TB6600 motors
+    pinMode(dirPin, OUTPUT);
+    pinMode(stepPin, OUTPUT);
 }
 
 void loop() {
@@ -46,36 +56,57 @@ void loop() {
         if (incomingByte != '\n' && commandIndex < COMMAND_BUFFER_SIZE - 1) {
             commandBuffer[commandIndex++] = incomingByte;
         } else {
-            commandBuffer[commandIndex] = '\0'; // Null-terminate the command
-            commandIndex = 0; // Reset buffer index
+            commandBuffer[commandIndex] = '\0';
+            commandIndex = 0;
 
             Serial.print("Received: ");
             Serial.println(commandBuffer);
 
             if (strncmp(commandBuffer, "TURN_MOTOR_", 11) == 0 && strstr(commandBuffer, "_ON") != nullptr) {
+                quantityDispensed = 0;
                 char motorId[3];
                 strncpy(motorId, commandBuffer + 11, 2);
-                motorId[2] = '\0'; // Null-terminate the motor ID
+                motorId[2] = '\0';
+                // Extract rack ID (first character of motorId)
+                lastRackId = motorId[0];
 
+                quantity = commandBuffer[14] - '0';
+                Serial.println(quantity);
+
+                // Move stepper to position
+                moveForTime(getPosition(lastRackId));
+
+                // Start DC motor
                 int motorIndex = getMotorIndexById(motorId);
-                limitSwitchMotorIndex = motorIndex;
                 if (motorIndex != -1) {
                     startMotor(motorIndex);
                     motors[motorIndex].isRunning = true;
                     motors[motorIndex].isStoppedBySwitch = false;
+                    motorCompleted = false; 
+                    delay(1000);
                 } else {
                     Serial1.println("❌ Unknown motor ID");
                 }
             } else {
                 Serial1.println("Unknown command");
             }
+
+            
         }
     }
+    
+    // Check limit switches
+    for (int i = 0; i < NUM_MOTORS; i++) {
+        checkLimitSwitch(i);
+    }
 
-    // Check limit switch for each motor
-    checkLimitSwitch(limitSwitchMotorIndex);
+    if (motorCompleted && quantityDispensed == quantity) {
+      delay(2000);
+      moveForTime(-getPosition(lastRackId));
+      motorCompleted = false;
+    }
 }
-
+// ----- Vending machine motor functinos -----
 void checkLimitSwitch(int motorIndex) {
   if (motorIndex < 0 || motorIndex >= NUM_MOTORS) {
       Serial.println("❌ Invalid motor index");
@@ -85,25 +116,27 @@ void checkLimitSwitch(int motorIndex) {
 
   int reading = digitalRead(m.limitSwitchPin);
 
-        if (reading != m.lastLimitSwitchState) {
-            m.lastDebounceTime = millis(); // Reset debounce timer
-        }
+  if (reading == HIGH && m.isRunning && !m.isStoppedBySwitch) {
+    Serial.println("🔴 Limit switch activated! Stopping motor.");
+    stopMotor(motorIndex);
+    m.isRunning = false;
+    m.isStoppedBySwitch = true;
+    motorCompleted = true;
+    quantityDispensed++;
 
-        if ((millis() - m.lastDebounceTime) > debounceDelay) {
-            if (reading == LOW && m.isRunning && !m.isStoppedBySwitch) {
-                Serial.println("🔴 Limit switch activated! Stopping motor.");
-                stopMotor(motorIndex);
-                m.isRunning = false;
-                m.isStoppedBySwitch = true;
-            }
-        }
-
-        m.lastLimitSwitchState = reading;
+    if (quantityDispensed != quantity) {
+        startMotor(motorIndex);
+        motors[motorIndex].isRunning = true;
+        motors[motorIndex].isStoppedBySwitch = false;
+        motorCompleted = false; 
+        delay(1000);
+    }
+  }
 }
 
 int getMotorIndexById(const char* motorId) {
     if (strcmp(motorId, "A1") == 0) return 0;
-    if (strcmp(motorId, "A2") == 0) return 1;
+    if (strcmp(motorId, "B1") == 0) return 1;
     return -1; 
 }
 
@@ -118,7 +151,7 @@ void startMotor(int motorIndex) {
     digitalWrite(m.IN2, LOW);
 
     Serial1.print("✅ Motor ");
-    Serial1.print(motorIndex == 0 ? "A1" : "A2");
+    Serial1.print(motorIndex == 0 ? "A1" : "B1");
     Serial1.println(" Running...");
 }
 
@@ -133,6 +166,34 @@ void stopMotor(int motorIndex) {
     digitalWrite(m.IN2, LOW);
 
     Serial1.print("🛑 Motor ");
-    Serial1.print(motorIndex == 0 ? "A1" : "A2");
+    Serial1.print(motorIndex == 0 ? "A1" : "B1");
     Serial1.println(" Stopped.");
+}
+
+// ----- TB6600 functions -----
+// Move motor for a specific time (milliseconds)
+void moveForTime(long timeInMilliseconds) {
+  bool moveForward = timeInMilliseconds > 0;
+  unsigned long duration = abs(timeInMilliseconds);  // Get absolute duration
+  
+  digitalWrite(dirPin, moveForward ? HIGH : LOW);
+  //digitalWrite(dirPin, LOW);
+  
+  unsigned long startTime = millis();
+  while (millis() - startTime < duration) {
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(25);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(25);
+  }
+}
+
+int getPosition(char rackId) {
+  switch (rackId) {  
+    case 'A': return 10490;  
+    case 'B': return 200;
+    case 'C': return 300;
+    case 'D': return 400;
+    default: return 0;  
+  }
 }
