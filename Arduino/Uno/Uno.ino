@@ -4,10 +4,9 @@ SoftwareSerial espSerial(2, 3); // RX on pin 2, TX on pin 3
 
 #include <Arduino.h>
 
-// Define the Motor struct
+// Define the Motor struct  
 struct Motor {
     int IN1;
-    int IN2;
     int limitSwitchPin;
     bool isRunning;
     bool isStoppedBySwitch;
@@ -16,10 +15,24 @@ struct Motor {
 };
 
 // Vending machine motor configuration
-const int NUM_MOTORS = 2;
+const int NUM_MOTORS = 16;
 Motor motors[NUM_MOTORS] = {
-    {9, 8, 6, false, false, HIGH, 0}, // Motor "A1"
-    {5, 4, 7, false, false, HIGH, 0} // Motor "A2" WORKING
+    {23, 31, false, false, HIGH, 0}, // A1
+    {24, 32, false, false, HIGH, 0}, // A2
+    {25, 33, false, false, HIGH, 0}, // A3
+    {4, 34, false, false, HIGH, 0}, // A4
+    {5, 35, false, false, HIGH, 0}, // B1
+    {6, 36, false, false, HIGH, 0}, // B2
+    {7, 37, false, false, HIGH, 0}, // B3
+    {8, 38, false, false, HIGH, 0}, // B4
+    {9, 39, false, false, HIGH, 0}, // C1
+    {10, 40, false, false, HIGH, 0}, // C2
+    {11, 41, false, false, HIGH, 0}, // C3
+    {12, 42, false, false, HIGH, 0}, // C4
+    {13, 43, false, false, HIGH, 0}, // D1
+    {14, 44, false, false, HIGH, 0}, // D2
+    {15, 45, false, false, HIGH, 0}, // D3
+    {16, 46, false, false, HIGH, 0} // D4
 };
 
 // Debounce delay
@@ -43,7 +56,6 @@ void setup() {
     // Initialize all vending machine motors
     for (int i = 0; i < NUM_MOTORS; i++) {
         pinMode(motors[i].IN1, OUTPUT);
-        pinMode(motors[i].IN2, OUTPUT);
         pinMode(motors[i].limitSwitchPin, INPUT); 
     }
 
@@ -136,9 +148,16 @@ void checkLimitSwitch(int motorIndex) {
 }
 
 int getMotorIndexById(const char* motorId) {
-    if (strcmp(motorId, "A1") == 0) return 0;
-    if (strcmp(motorId, "B1") == 0) return 1;
-    return -1; 
+  if (strlen(motorId) != 2) return -1;
+
+  char row = motorId[0];
+  char col = motorId[1];
+
+  if (row >= 'A' && row <= 'D' && col >= '1' && col <= '4') {
+    return (row - 'A') * 4 + (col - '1');
+  }
+
+  return -1;
 }
 
 void startMotor(int motorIndex) {
@@ -149,11 +168,6 @@ void startMotor(int motorIndex) {
 
     Motor& m = motors[motorIndex];
     digitalWrite(m.IN1, HIGH);
-    digitalWrite(m.IN2, LOW);
-
-    espSerial.print("✅ Motor ");
-    espSerial.print(motorIndex == 0 ? "A1" : "B1");
-    espSerial.println(" Running...");
 }
 
 void stopMotor(int motorIndex) {
@@ -164,11 +178,6 @@ void stopMotor(int motorIndex) {
 
     Motor& m = motors[motorIndex];
     digitalWrite(m.IN1, LOW);
-    digitalWrite(m.IN2, LOW);
-
-    espSerial.print("🛑 Motor ");
-    espSerial.print(motorIndex == 0 ? "A1" : "B1");
-    espSerial.println(" Stopped.");
 }
 
 // ----- TB6600 functinos -----

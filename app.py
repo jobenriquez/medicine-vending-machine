@@ -5,7 +5,9 @@ gevent.monkey.patch_all()
 import os
 from dotenv import load_dotenv
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from threading import Thread
+
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from flask_login import (
     LoginManager,
     login_user,
@@ -14,6 +16,9 @@ from flask_login import (
     UserMixin,
     current_user,
 )
+
+import time
+
 from flask_bcrypt import Bcrypt
 
 from gevent import pywsgi
@@ -240,6 +245,7 @@ def handle_motor_command(command):
     print(f"Received command: {command}")
     socketio.emit("toggle_motor", command)
 
+
 @app.route("/dispense_item", methods=["POST"])
 @login_required
 @admin_required
@@ -251,11 +257,45 @@ def dispense_item():
     motor_position = f"{row}{column}_{quantity}"
     print(motor_position)
 
-    socketio.emit("toggle_motor", motor_position)  # Send dynamic motor ID
-
+    socketio.emit("toggle_motor", motor_position)
     return redirect(url_for("dashboard"))
+    # # Wait for acknowledgment with timeout
+    # global acknowledged
+    # acknowledged = False
+    #
+    # # Use threading to allow waiting asynchronously while still processing other events
+    # thread = Thread(target=wait_for_acknowledgment)
+    # thread.start()
+    #
+    # thread.join()  # Wait for the acknowledgment or timeout
+    #
+    # if acknowledged:
+    #     return jsonify({'status': 'success', 'message': 'Item dispensed successfully.'})
+    # else:
+    #     return jsonify({'status': 'error', 'message': 'Failed to receive acknowledgment in time.'})
 
 
+# WebSocket event handler for acknowledgment from ESP32
+# @socketio.on('acknowledge')
+# def handle_acknowledge(message):
+#     global acknowledged
+#     if message == "Process Complete":
+#         print("✅ Received acknowledgment from ESP32.")
+#         acknowledged = True
+#
+#
+# def wait_for_acknowledgment():
+#     start_time = time.time()
+#     timeout = 60
+#
+#     # Block while waiting for the acknowledgment message
+#     while time.time() - start_time < timeout:
+#         # If acknowledgment is received, break out of the loop
+#         if 'acknowledged' in globals() and acknowledged:
+#             return True
+#         socketio.sleep(1)  # Allow socketio to process events and avoid blocking
+#
+#     return False
 # @socketio.on('connect')
 # def handle_connect():
 #    print("✅ ESP32 Connected!")

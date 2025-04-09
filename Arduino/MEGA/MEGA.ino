@@ -3,16 +3,30 @@
 // Define the Motor struct  
 struct Motor {
     int IN1;
-    int IN2;
     int limitSwitchPin;
     bool isRunning;
     bool isStoppedBySwitch;
 };
 
 // Vending machine motor configuration
-const int NUM_MOTORS = 1;
+const int NUM_MOTORS = 16;
 Motor motors[NUM_MOTORS] = {
-    {7, 6, 5, false, false}, // Motor "A1"
+    {23, 31, false, false}, // A1
+    {24, 32, false, false}, // A2
+    {25, 33, false, false}, // A3
+    {4, 34, false, false}, // A4
+    {5, 35, false, false}, // B1
+    {6, 36, false, false}, // B2
+    {7, 37, false, false}, // B3
+    {8, 38, false, false}, // B4
+    {9, 39, false, false}, // C1
+    {10, 40, false, false}, // C2
+    {11, 41, false, false}, // C3
+    {12, 42, false, false}, // C4
+    {13, 43, false, false}, // D1
+    {14, 44, false, false}, // D2
+    {15, 45, false, false}, // D3
+    {16, 46, false, false} // D4
 };
 
 
@@ -23,8 +37,8 @@ int commandIndex = 0;
 int limitSwitchMotorIndex = -1;
 
 // TB6600 configuration
-const int dirPin = 13;  
-const int stepPin = 12; 
+const int dirPin = 50;  
+const int stepPin = 51; 
 const int initialPosition = 0;
 const int stepsPerSecond = 100;
 
@@ -40,7 +54,6 @@ void setup() {
     // Initialize all vending machine motors
     for (int i = 0; i < NUM_MOTORS; i++) {
         pinMode(motors[i].IN1, OUTPUT);
-        pinMode(motors[i].IN2, OUTPUT);
         pinMode(motors[i].limitSwitchPin, INPUT_PULLUP); 
     }
 
@@ -104,6 +117,9 @@ void loop() {
       delay(2000);
       moveForTime(-getPosition(lastRackId));
       motorCompleted = false;
+
+      // Send to ESP32
+      Serial1.println("Process_Complete"); 
     }
 }
 // ----- Vending machine motor functinos -----
@@ -135,9 +151,16 @@ void checkLimitSwitch(int motorIndex) {
 }
 
 int getMotorIndexById(const char* motorId) {
-    if (strcmp(motorId, "A1") == 0) return 0;
-    if (strcmp(motorId, "B1") == 0) return 1;
-    return -1; 
+    if (strlen(motorId) != 2) return -1;
+
+    char row = motorId[0];
+    char col = motorId[1];
+
+    if (row >= 'A' && row <= 'D' && col >= '1' && col <= '4') {
+      return (row - 'A') * 4 + (col - '1');
+    }
+
+    return -1;
 }
 
 void startMotor(int motorIndex) {
@@ -148,7 +171,6 @@ void startMotor(int motorIndex) {
 
     Motor& m = motors[motorIndex];
     digitalWrite(m.IN1, HIGH);
-    digitalWrite(m.IN2, LOW);
 
     Serial1.print("✅ Motor ");
     Serial1.print(motorIndex == 0 ? "A1" : "B1");
@@ -163,7 +185,6 @@ void stopMotor(int motorIndex) {
 
     Motor& m = motors[motorIndex];
     digitalWrite(m.IN1, LOW);
-    digitalWrite(m.IN2, LOW);
 
     Serial1.print("🛑 Motor ");
     Serial1.print(motorIndex == 0 ? "A1" : "B1");
@@ -174,26 +195,26 @@ void stopMotor(int motorIndex) {
 // Move motor for a specific time (milliseconds)
 void moveForTime(long timeInMilliseconds) {
   bool moveForward = timeInMilliseconds > 0;
-  unsigned long duration = abs(timeInMilliseconds);  // Get absolute duration
+  unsigned long duration = abs(timeInMilliseconds); 
   
-  digitalWrite(dirPin, moveForward ? HIGH : LOW);
-  //digitalWrite(dirPin, LOW);
+  digitalWrite(dirPin, moveForward ? LOW : HIGH);
+  //digitalWrite(dirPin, HIGH);
   
   unsigned long startTime = millis();
   while (millis() - startTime < duration) {
     digitalWrite(stepPin, HIGH);
-    delayMicroseconds(25);
+    delayMicroseconds(15);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(25);
+    delayMicroseconds(15);
   }
 }
 
-int getPosition(char rackId) {
+long getPosition(char rackId) {
   switch (rackId) {  
-    case 'A': return 10490;  
-    case 'B': return 200;
-    case 'C': return 300;
-    case 'D': return 400;
+    case 'A': return 32500;  
+    case 'B': return 23000;
+    case 'C': return 13000;
+    case 'D': return 4000;
     default: return 0;  
   }
 }

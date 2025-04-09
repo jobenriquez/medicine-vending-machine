@@ -17,7 +17,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length) {
         case WStype_CONNECTED:
             Serial.println("✅ Connected to WebSocket!");
             webSocket.sendTXT("40"); // Join default namespace
-            break;
+            break;  
         case WStype_TEXT: {
             String payloadStr = (char*)payload;
             Serial.printf("Received: %s\n", payloadStr);
@@ -84,4 +84,17 @@ void setup() {
 
 void loop() {
     webSocket.loop();
+
+     if (Serial2.available()) {
+        String message = Serial2.readString();  // Read the incoming message
+        Serial.println("Received from Arduino: " + message);
+
+        // Check if the message is "Process_Complete"
+        if (message == "Process_Complete") {
+            // Send the completion message to Flask server via WebSocket
+            String completionMessage = "Process completed successfully!";
+            webSocket.sendTXT(completionMessage);
+            Serial.println("✅ Process complete, message sent to Flask app.");
+        }
+    }
 }
