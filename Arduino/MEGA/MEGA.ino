@@ -29,6 +29,12 @@ Motor motors[NUM_MOTORS] = {
     {16, 46, false, false} // D4
 };
 
+// ESP32 Signal Pin
+const int arduinoSignalPin = 22;
+
+// Ultrasonic sensor
+#define trigPin 30
+#define echoPin 29
 
 // Command buffer
 const int COMMAND_BUFFER_SIZE = 32;
@@ -60,6 +66,10 @@ void setup() {
     // Initialize TB6600 motors
     pinMode(dirPin, OUTPUT);
     pinMode(stepPin, OUTPUT);
+
+    // Initialize ultrasonic sensor
+    pinMode(trigPin, OUTPUT);
+    pinMode(echoPin, INPUT);
 }
 
 void loop() {
@@ -103,8 +113,6 @@ void loop() {
             } else {
                 Serial1.println("Unknown command");
             }
-
-            
         }
     }
     
@@ -117,9 +125,11 @@ void loop() {
       delay(2000);
       moveForTime(-getPosition(lastRackId));
       motorCompleted = false;
-
-      // Send to ESP32
-      Serial1.println("Process_Complete"); 
+      if (checkIfDispensed()) {
+        Serial1.println("DISPENSE_SUCCESSFUL");
+      } else {
+        Serial1.println("DISPENSE_UNSUCCESSFUL");
+      }
     }
 }
 // ----- Vending machine motor functinos -----
@@ -217,4 +227,31 @@ long getPosition(char rackId) {
     case 'D': return 4000;
     default: return 0;  
   }
+}
+
+// ----- Ultrasonic Sensor functions -----
+bool checkIfDispensed() {
+  long duration;
+  int distance;
+  bool itemDetected = false;
+   // Trigger pulse
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  // Measure echo time
+  duration = pulseIn(echoPin, HIGH);
+  distance = duration * 0.034 / 2;
+
+  Serial.println(distance);
+
+  if (distance < 40) {
+    Serial.println("Item detected!");
+    itemDetected = true;
+    delay(2000); 
+  }
+
+  return itemDetected;
 }

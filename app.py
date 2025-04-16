@@ -27,7 +27,7 @@ from geventwebsocket.handler import WebSocketHandler
 import requests
 from flask_socketio import SocketIO, send
 
-from models import db, Medicine, User
+from models import db, Medicine, User, Transaction
 
 from functools import wraps
 
@@ -50,7 +50,6 @@ login_manager.login_view = "login"
 
 bcrypt = Bcrypt(app)
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
@@ -68,7 +67,7 @@ def admin_required(f):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("dashboard.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -148,6 +147,16 @@ def dashboard():
         expiry_warning=expiry_warning,
     )
 
+@app.route("/transactions")
+@login_required
+@admin_required
+def transactions():
+    transactions = Transaction.query.all()
+    return render_template(
+        "transactions.html",
+        medicines=transactions,
+    )
+
 @app.route("/add_item", methods=["POST"])
 @login_required
 @admin_required
@@ -206,7 +215,6 @@ def delete_item(item_id):
 
     return redirect(url_for("dashboard"))
 
-
 @app.route("/account_settings")
 @login_required
 @admin_required
@@ -259,49 +267,62 @@ def dispense_item():
 
     socketio.emit("toggle_motor", motor_position)
     return redirect(url_for("dashboard"))
-    # # Wait for acknowledgment with timeout
-    # global acknowledged
-    # acknowledged = False
-    #
-    # # Use threading to allow waiting asynchronously while still processing other events
-    # thread = Thread(target=wait_for_acknowledgment)
-    # thread.start()
-    #
-    # thread.join()  # Wait for the acknowledgment or timeout
-    #
-    # if acknowledged:
-    #     return jsonify({'status': 'success', 'message': 'Item dispensed successfully.'})
-    # else:
-    #     return jsonify({'status': 'error', 'message': 'Failed to receive acknowledgment in time.'})
 
+@app.route('/dispense_status', methods=['POST'])
+def dispense_status():
+    status = request.form.get('status')
+    row = request.form.get('row')
+    column = request.form.get('column')
+    quantity = request.form.get('quantity')
 
-# WebSocket event handler for acknowledgment from ESP32
-# @socketio.on('acknowledge')
-# def handle_acknowledge(message):
-#     global acknowledged
-#     if message == "Process Complete":
-#         print("✅ Received acknowledgment from ESP32.")
-#         acknowledged = True
-#
-#
-# def wait_for_acknowledgment():
-#     start_time = time.time()
-#     timeout = 60
-#
-#     # Block while waiting for the acknowledgment message
-#     while time.time() - start_time < timeout:
-#         # If acknowledgment is received, break out of the loop
-#         if 'acknowledged' in globals() and acknowledged:
-#             return True
-#         socketio.sleep(1)  # Allow socketio to process events and avoid blocking
-#
-#     return False
-# @socketio.on('connect')
-# def handle_connect():
-#    print("✅ ESP32 Connected!")
-#    socketio.emit('connection_success', {'message': 'Connected to Flask WebSocket'})
-#    socketio.emit('ping_test', {'message': 'Ping from Flask'})
-#
+    if status and row and column and quantity:
+        print(f"Received dispense status from ESP32: {status}")
+        # Only proceed if dispense was successful
+        if status == "success":
+            qty = int(quantity)
+            # Query for the medicines in the specified location (FIFO order)
+            medicines_query = Medicine.query.filter_by(row=row, column=column).order_by(Medicine.added_date.asc())
+            medicines_to_dispense = medicines_query.limit(qty).all()
+
+            if medicines_to_dispense and len(medicines_to_dispense) == qty:
+                med_reference = medicines_to_dispense[0]
+                total_price = float(med_reference.price) * qty
+
+                print(f"Medicines to dispense: {medicines_to_dispense}")
+
+                transaction = Transaction(
+                    medicine_id=med_reference.id,
+                    medicine_name=med_reference.medicine_name,
+                    quantity_dispensed=qty,
+                    total_price=total_price,
+                    date_time=date.today()
+                )
+                db.session.add(transaction)
+                print("Medicine ID:", transaction.medicine_id)
+                print("Medicine Name:", transaction.medicine_name)
+                print("Quantity Dispensed:", transaction.quantity_dispensed)
+                print("Total Price:", transaction.total_price)
+                print("Date & Time:", transaction.date_time)
+
+                # Now remove the medicines from the inventory
+                for med in medicines_to_dispense:
+                    db.session.delete(med)
+
+                try:
+                    db.session.commit()
+                    flash("Medicine dispensed and transaction recorded successfully!", "success")
+                except Exception as e:
+                    db.session.rollback()
+                    flash("Error while recording the transaction: " + str(e), "danger")
+
+            else:
+                flash("Not enough medicine items available to dispense.", "danger")
+        # Emit the dispense status to connected clients (e.g., update your dashboard)
+        socketio.emit('dispense_update', {'status': status})
+        return 'Dispense status received', 200
+    else:
+        return 'Incomplete status data received', 400
+
 
 if __name__ == "__main__":
     # app.run(debug=True)

@@ -154,6 +154,11 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'transactions' %}active{% endif %}" href="{{ url_for('transactions') }}">
+                                    Transactions
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'account_settings' %}active{% endif %}" href="{{ url_for('account_settings') }}">
                                     Account Settings
                                 </a>
@@ -359,10 +364,6 @@
         </div>
     </div>
 
-{#    <div id="loader-div">#}
-{#        <span class="loader"></span>#}
-{#    </div>#}
-
     <!-- Bootstrap JS and dependencies -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -370,58 +371,18 @@
     // Connect to Flask Socket.IO server
     var socket = io.connect(window.location.protocol + '//' + window.location.hostname + ':' + location.port);
 
-    // Dispense form submission handling
-{#document.querySelector('form[action="{{ url_for("dispense_item") }}"]').addEventListener('submit', function(e) {#}
-{#    e.preventDefault(); // Prevent default form submission#}
-{##}
-{#    const loader = document.getElementById('loader-div');#}
-{#    loader.style.display = 'block'; // Show loader#}
-{##}
-{#    // Submit form data via AJAX#}
-{#    const formData = new FormData(this);#}
-{#    fetch(this.action, {#}
-{#        method: 'POST',#}
-{#        body: formData#}
-{#    })#}
-{#    .then(response => response.json()) // Parse response as JSON#}
-{#    .then(data => {#}
-{#        if (data.status === 'success') {#}
-{#            listenForAcknowledgment();#}
-{#        } else {#}
-{#            alert('Error dispensing item: ' + data.message);#}
-{#        }#}
-{#    })#}
-{#    .catch(error => {#}
-{#        alert('An error occurred: ' + error.message);#}
-{#    })#}
-{#    .finally(() => {#}
-{#        loader.style.display = 'none'; // Hide loader regardless of outcome#}
-{#    });#}
-{#});#}
-{##}
-{#// Function to listen for acknowledgment from the ESP32 via WebSocket#}
-{#function listenForAcknowledgment() {#}
-{#    const timeout = 60000;#}
-{##}
-{#    // Set a timeout to handle cases where acknowledgment is not received#}
-{#    const timeoutId = setTimeout(function() {#}
-{#        alert('Error: Process not completed as expected.');#}
-{#    }, timeout);#}
-{##}
-{#    socket.on('acknowledge', function(message) {#}
-{#        clearTimeout(timeoutId); // Clear the timeout when acknowledgment is received#}
-{##}
-{#        if (message === 'Process Complete') {#}
-{#            // Acknowledge the process completion and show success#}
-{#            alert('Item dispensed successfully!');#}
-{#            window.location.reload(); // Reload the page or take other actions#}
-{#        } else {#}
-{#            // Handle case where acknowledgment is not received as expected#}
-{#            alert('Error: Process not completed as expected.');#}
-{#        }#}
-{#    });#}
-{#}#}
+    socket.on('dispense_update', (data) => {
+      if (data.status === 'success') {
+        alert('Item dispensed successfully!');
+      } else if (data.status === 'failure') {
+        alert('Dispense unsuccessful. Please try again or check the dispenser.');
+      }
+      location.reload();
+    });
 
+    socket.on('process_complete', (data) => {
+      alert(data.message);
+    });
 </script>
 
 </body>
