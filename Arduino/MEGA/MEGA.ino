@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <AddicoreRFID.h>
+#include <SPI.h>
 
 // Define the Motor struct  
 struct Motor {
@@ -29,8 +31,9 @@ Motor motors[NUM_MOTORS] = {
     {16, 46, false, false} // D4
 };
 
-// ESP32 Signal Pin
-const int arduinoSignalPin = 22;
+// LED Lights
+#define redLight 27
+#define greenLight 28
 
 // Ultrasonic sensor
 #define trigPin 30
@@ -70,6 +73,13 @@ void setup() {
     // Initialize ultrasonic sensor
     pinMode(trigPin, OUTPUT);
     pinMode(echoPin, INPUT);
+
+    // Initialize LED lights
+    pinMode(redLight, OUTPUT);
+    pinMode(greenLight, OUTPUT);
+
+    // Turn on green light by default
+    digitalWrite(greenLight, HIGH);
 }
 
 void loop() {
@@ -95,6 +105,9 @@ void loop() {
 
                 quantity = commandBuffer[14] - '0';
                 Serial.println(quantity);
+
+                digitalWrite(greenLight, LOW);
+                digitalWrite(redLight, HIGH);
 
                 // Move stepper to position
                 moveForTime(getPosition(lastRackId));
@@ -124,14 +137,18 @@ void loop() {
     if (motorCompleted && quantityDispensed == quantity) {
       delay(2000);
       moveForTime(-getPosition(lastRackId));
-      motorCompleted = false;
+      motorCompleted = false; 
       if (checkIfDispensed()) {
         Serial1.println("DISPENSE_SUCCESSFUL");
       } else {
         Serial1.println("DISPENSE_UNSUCCESSFUL");
       }
+
+      digitalWrite(redLight, LOW);
+      digitalWrite(greenLight, HIGH);
     }
 }
+
 // ----- Vending machine motor functinos -----
 void checkLimitSwitch(int motorIndex) {
   if (motorIndex < 0 || motorIndex >= NUM_MOTORS) {
@@ -255,3 +272,4 @@ bool checkIfDispensed() {
 
   return itemDetected;
 }
+
