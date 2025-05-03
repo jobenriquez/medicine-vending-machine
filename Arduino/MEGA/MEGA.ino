@@ -25,7 +25,7 @@ Motor motors[NUM_MOTORS] = {
     {10, 40, false, false}, // C2
     {11, 41, false, false}, // C3
     {12, 42, false, false}, // C4
-    {13, 43, false, false}, // D1
+    {20, 43, false, false}, // D1
     {14, 44, false, false}, // D2
     {15, 45, false, false}, // D3
     {16, 46, false, false} // D4
@@ -49,7 +49,7 @@ int limitSwitchMotorIndex = -1;
 const int dirPin = 50;  
 const int stepPin = 51; 
 const int initialPosition = 0;
-const int stepsPerSecond = 100;
+const int emergencyStopPin = 53;
 
 bool motorCompleted = false;
 char lastRackId = '\0'; 
@@ -69,6 +69,7 @@ void setup() {
     // Initialize TB6600 motors
     pinMode(dirPin, OUTPUT);
     pinMode(stepPin, OUTPUT);
+    pinMode(emergencyStopPin, INPUT_PULLUP);
 
     // Initialize ultrasonic sensor
     pinMode(trigPin, OUTPUT);
@@ -138,6 +139,7 @@ void loop() {
       delay(2000);
       moveForTime(-getPosition(lastRackId));
       motorCompleted = false; 
+      delay(1000);
       if (checkIfDispensed()) {
         Serial1.println("DISPENSE_SUCCESSFUL");
       } else {
@@ -229,19 +231,23 @@ void moveForTime(long timeInMilliseconds) {
   
   unsigned long startTime = millis();
   while (millis() - startTime < duration) {
+    if (digitalRead(emergencyStopPin) == HIGH) {
+      Serial.println("Limit switch activated! Stopping motor.");
+      break;
+    }
     digitalWrite(stepPin, HIGH);
-    delayMicroseconds(15);
+    delayMicroseconds(20);
     digitalWrite(stepPin, LOW);
-    delayMicroseconds(15);
+    delayMicroseconds(20);
   }
 }
 
 long getPosition(char rackId) {
   switch (rackId) {  
-    case 'A': return 32500;  
-    case 'B': return 23000;
-    case 'C': return 13000;
-    case 'D': return 4000;
+    case 'A': return 21000;  
+    case 'B': return 15000;
+    case 'C': return 8500;
+    case 'D': return 2000;
     default: return 0;  
   }
 }
@@ -264,12 +270,14 @@ bool checkIfDispensed() {
 
   Serial.println(distance);
 
-  if (distance < 40) {
+  if (distance <= 43) {
     Serial.println("Item detected!");
     itemDetected = true;
     delay(2000); 
   }
 
   return itemDetected;
+  //return true;
+
 }
 

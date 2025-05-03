@@ -206,7 +206,6 @@
                         <th>Quantity</th>
                         <th>Total Price</th>
                         <th>Date</th>
-                        <th>Options</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -215,7 +214,7 @@
                             <tr>
                                 <td>{{ loop.index }}</td>
                                 <td>{{ transaction.id }}</td>
-                                <td>{{ transaction.medicine.medicine_name }}</td>
+                                <td>{{ transaction.medicine_name }}</td>
                                 <td>{{ transaction.quantity_dispensed }}</td>
                                 <td>{{ transaction.total_price }}</td>
                                 <td>{{ transaction.date_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>

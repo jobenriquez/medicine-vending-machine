@@ -154,7 +154,7 @@ def transactions():
     transactions = Transaction.query.all()
     return render_template(
         "transactions.html",
-        medicines=transactions,
+        transactions=transactions,
     )
 
 @app.route("/add_item", methods=["POST"])
@@ -169,7 +169,7 @@ def add_item():
     column = request.form["column"]
     quantity = int(request.form["quantity"])
 
-    # Count total number of existing items and items to be added. Total number must not exceed 8
+    # Count total number of existing items and items to be added. Total number must not exceed 4
     count = Medicine.query.filter(Medicine.row == row, Medicine.column == column).count()
     if count + quantity > 4:
         flash(
@@ -262,6 +262,15 @@ def dispense_item():
     column = request.form["dispenseItemColumn"]
     quantity = int(request.form["dispenseItemQuantity"])
 
+    # Count total number of existing items
+    # count = Medicine.query.filter(Medicine.row == row, Medicine.column == column).count()
+    # if quantity > count:
+    #     flash(
+    #         f"Cannot dispense {quantity} item(s). Row {row} Column {column} only has {count} item(s).",
+    #         "danger",
+    #     )
+    #     return redirect(url_for("dashboard"))
+
     motor_position = f"{row}{column}_{quantity}"
     print(motor_position)
 
@@ -295,7 +304,6 @@ def dispense_status():
                     medicine_name=med_reference.medicine_name,
                     quantity_dispensed=qty,
                     total_price=total_price,
-                    date_time=date.today()
                 )
                 db.session.add(transaction)
                 print("Medicine ID:", transaction.medicine_id)
@@ -304,10 +312,9 @@ def dispense_status():
                 print("Total Price:", transaction.total_price)
                 print("Date & Time:", transaction.date_time)
 
-                # Now remove the medicines from the inventory
+                # Remove the medicines from the medicines table
                 for med in medicines_to_dispense:
                     db.session.delete(med)
-
                 try:
                     db.session.commit()
                     flash("Medicine dispensed and transaction recorded successfully!", "success")

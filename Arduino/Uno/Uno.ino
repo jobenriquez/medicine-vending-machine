@@ -1,7 +1,7 @@
 #include <AddicoreRFID.h>
 #include <SPI.h>
 
-#define lockPin 5      
+#define lockPin 4      
 #define MAX_LEN 16     
 
 AddicoreRFID myRFID; 
@@ -24,6 +24,8 @@ void setup() {
 
   myRFID.AddicoreRFID_Init(); 
   pinMode(lockPin, OUTPUT);   
+
+  digitalWrite(lockPin, LOW);
 }
 
 void loop() {

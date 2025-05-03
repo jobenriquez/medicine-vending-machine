@@ -3,13 +3,11 @@
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 
-
-//const char* ssid = "PLDTHOMEFIBRbdb28";
-//const char* password = "PLDTWIFI6utmu";
 const char* ssid = "TestWifi";
 const char* password = "Admin1234567890!!";
 //const char* host = "192.168.1.7"; // Flask server IP
-const char* host = "192.168.1.23"; // Flask server IP
+//const char* host = "192.168.1.23"; // Flask server IP THIS PC
+const char* host = "192.168.1.10"; // Flask server IP KEV LAPTOP
 //const char* host = "192.168.1.30"; // Flask server IP
 const uint16_t port = 5000;
 const char* notification_endpoint = "/dispense_status";

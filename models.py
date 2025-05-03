@@ -26,7 +26,7 @@ class Medicine(db.Model):
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     id = db.Column(db.Integer, primary_key=True)
-    medicine_id = db.Column(db.Integer, db.ForeignKey('medicines.id'), nullable=False)
+    medicine_id = db.Column(db.Integer, nullable=False)
     medicine_name = db.Column(db.String(100), nullable=False)
     quantity_dispensed = db.Column(db.Integer, nullable=False)
     total_price = db.Column(db.Numeric(10,2), nullable=False)
