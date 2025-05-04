@@ -5,26 +5,15 @@ gevent.monkey.patch_all()
 import os
 from dotenv import load_dotenv
 
-from threading import Thread
-
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 from flask_login import (
     LoginManager,
     login_user,
     logout_user,
     login_required,
-    UserMixin,
     current_user,
 )
-
-import time
-
 from flask_bcrypt import Bcrypt
-
-from gevent import pywsgi
-from geventwebsocket.handler import WebSocketHandler
-
-import requests
 from flask_socketio import SocketIO, send
 
 from models import db, Medicine, User, Transaction
@@ -64,8 +53,9 @@ def admin_required(f):
 
     return decorated_function
 
-
 @app.route("/")
+@login_required
+@admin_required
 def home():
     return render_template("dashboard.html")
 
@@ -87,42 +77,40 @@ def login():
 
     return render_template("login.html")
 
+@app.route('/register', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+        full_name = request.form['full_name']
+        account_type = request.form['account_type']
 
-#
-# @app.route('/register', methods=['GET', 'POST'])
-# @login_required
-# @admin_required
-# def register():
-#     if request.method == 'POST':
-#         username = request.form['username']
-#         password = request.form['password']
-#         confirm_password = request.form['confirm_password']
-#         full_name = request.form['full_name']
-#         account_type = request.form['account_type']
-#
-#         # Check if passwords match
-#         if password != confirm_password:
-#             flash('Passwords do not match', 'danger')
-#             return redirect(url_for('register'))
-#
-#         # Check if username already exists
-#         existing_user = User.query.filter_by(user_name=username).first()
-#         if existing_user:
-#             flash('Username already taken. Choose a different one.', 'danger')
-#             return redirect(url_for('register'))
-#
-#         # Hash password before storing it
-#         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-#
-#         # Create a new user
-#         new_user = User(user_name=username, user_password=hashed_password, full_name=full_name, account_type=account_type)
-#         db.session.add(new_user)
-#         db.session.commit()
-#
-#         flash('Registration successful! You can now log in.', 'success')
-#         return redirect(url_for('login'))
-#
-#     return render_template('register.html')
+        # Check if passwords match
+        if password != confirm_password:
+            flash('Passwords do not match', 'danger')
+            return redirect(url_for('register'))
+
+        # Check if username already exists
+        existing_user = User.query.filter_by(user_name=username).first()
+        if existing_user:
+            flash('Username already taken. Choose a different one.', 'danger')
+            return redirect(url_for('register'))
+
+        # Hash password before storing it
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+
+        # Create a new user
+        new_user = User(user_name=username, user_password=hashed_password, full_name=full_name, account_type=account_type)
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('Registration successful! You can now log in.', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
 
 
 @app.route("/logout")
@@ -263,13 +251,13 @@ def dispense_item():
     quantity = int(request.form["dispenseItemQuantity"])
 
     # Count total number of existing items
-    # count = Medicine.query.filter(Medicine.row == row, Medicine.column == column).count()
-    # if quantity > count:
-    #     flash(
-    #         f"Cannot dispense {quantity} item(s). Row {row} Column {column} only has {count} item(s).",
-    #         "danger",
-    #     )
-    #     return redirect(url_for("dashboard"))
+    count = Medicine.query.filter(Medicine.row == row, Medicine.column == column).count()
+    if quantity > count:
+        flash(
+            f"Cannot dispense {quantity} item(s). Row {row} Column {column} only has {count} item(s).",
+            "danger",
+        )
+        return redirect(url_for("dashboard"))
 
     motor_position = f"{row}{column}_{quantity}"
     print(motor_position)
@@ -332,19 +320,6 @@ def dispense_status():
 
 
 if __name__ == "__main__":
-    # app.run(debug=True)
-    #socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
-    # socketio.run(app, host='0.0.0.0', port=5000)
-
-    #host = "0.0.0.0"
-    #host = "192.168.1.23"
-    #port = 5000
-    #print(f"🚀 Server running at: http://127.0.0.1:{port}/ (Localhost)")
-    # print(f"🌍 Access on LAN: http://your-local-ip:{port}/")
-
-    #server = pywsgi.WSGIServer((host, port), app, handler_class=WebSocketHandler)
-    #server.serve_forever()
-
     host = "0.0.0.0"
     port = 5000
     print(f"🚀 Server running at: http://{host}:{port}/")

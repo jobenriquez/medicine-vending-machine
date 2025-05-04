@@ -30,4 +30,5 @@ class Transaction(db.Model):
     medicine_name = db.Column(db.String(100), nullable=False)
     quantity_dispensed = db.Column(db.Integer, nullable=False)
     total_price = db.Column(db.Numeric(10,2), nullable=False)
-    date_time = db.Column(db.DateTime, default=datetime.utcnow)
+    date_time = db.Column(db.DateTime, default=datetime.now)
+
